@@ -9,6 +9,7 @@
 \usepackage{todonotes}
 \newcommand\rigel[1]{\todo[color=green, inline]{\textbf{Rigel}: #1}}
 \usepackage{orcidlink}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage[
   compatibility=false,
@@ -36,6 +37,7 @@
 \markboth{XLIV BRAZILIAN SYMPOSIUM ON TELECOMMUNICATIONS AND SIGNAL PROCESSING - SBrT 2026, SEPTEMBER 29TH TO OCTOBER 2ND, 2026, SALVADOR, BA}{}
 
 \begin{abstract}
+Hive inspections are intermittent and disturb the colony, and many apiaries have no network coverage. This paper presents a low-cost embedded station that records the entrance activity and the temperature of a beehive without a network. An ESP32 with an OV2640 camera captures short image windows of the entrance, a sealed DS18B20 reads the temperature inside the hive, an AHT20 reads the temperature and humidity outside, and the data go to a microSD card collected once a week. Offline, a YOLO11n detector counts the bees visible in each window, and each count is stored next to the temperature of the same time. The group has no access to a hive, so the detector is evaluated on public videos of real hives with hand-labelled bees. On a clip from a hive left out of the detector's training, the median number of visible bees per 5~s window changed by at most one bee between 25 and 5 frames per second, which suggests that the 10 frames per second planned for the station are enough for this measure.
 \end{abstract}
 \begin{keywords}
 Beehive monitoring, embedded systems, Internet of Things, computer vision.
@@ -73,40 +75,56 @@ The camera, the PSRAM, and the flash leave seven free pins on the board. The mic
 \section{The Method}
 \label{sec:method}
 
-\rigel{AC Semana 7:
-Nesse momento já teremos a seção Introdução, a seção II e a Seção III que trata do método que o grupo propõe.
-Atividade relativa a parte escrita: Elaborar a seção III que deverá tratar sobre o método proposto:
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{assets/arquitetura.png}
+  \caption{Processing chain of the station.}
+  \label{fig:architecture}
+\end{figure}
 
-(1) Apresente, em detalhes, o funcionamento do sistema desenvolvido. Como nessa seção estão as contribuições do grupo, não é necessário inserir referências que dêem suporte;
+Fig.~\ref{fig:architecture} shows the processing chain. At the hive, the camera wakes every five minutes from 07:00 to 17:00 and records a five-second window at ten frames per second. Each frame goes to a folder named after the date, with the time in the file name. Every three minutes, the board appends to a CSV file the date, the time, the interior temperature, and the exterior temperature and humidity. After the weekly retrieval, a computer runs the detector on every frame and joins each window with the environmental row closest in time.
 
-(2) Elabore um diagrama que facilite a compreensão do método (use o LucidChart por exemplo, exporte o diagrama como PDF para manter a boa resolução no artigo, cuidado com os espaços em branco que podem sobrar às margens do diagrama (no momento de exportar como PDF faça um recorte personalizado para tirar as margens em branco indesejáveis).
+The detector is the YOLO11n model of the Beehaviour project\footnote{\url{https://github.com/jordicalsinabaldoma/beehavior-upc}, AGPL-3.0.}, which its authors trained on 1756 frames of the Sledevi\v{c} and Matuzevi\v{c}ius dataset \cite{sledevic2024dataset}, with three hives left out of training. It has a single class, takes a 640-pixel input, and keeps boxes with confidence above 0.40. We use its detection only. Its authors also count entries and exits by tracking each bee, and they report that this count falls 30\% to 75\% short when many bees crowd the board. The station replaces that step with the median number of bees per frame in each window, which needs no tracking and tolerates a bee missed in a single frame. We also compute a turnover measure, the number of bees that appear in and leave the image per minute, by linking detections in neighbouring frames. It can separate bees resting on the board from bees passing through, but it is not yet reliable, as Section~\ref{sec:results} shows.
 
-De forma alternativa (ou adicionalmente), o grupo poderá gerar um pseudocódigo para mostrar como o sistema funciona (passos principais do método proposto);
+The evaluation reduces the 50 frames per second of the public videos to the rate of the station and compares the counts with the hand labels, using only the hives left out of training. For the main experiment, the same videos play on a screen in front of the OV2640, the station captures them, and the detector runs again. The labels still hold, because the bees are the same, so the difference between both counts measures what the camera costs. The same videos also allow a comparison of five- and ten-second windows before the station reaches a hive.
 
-(3) Um parágrafo deverá ser escrito e deverá referenciar o diagrama criado na seção III Método. Explique o diagrama criado ao leitor.
-(4) Outro parágrafo deverá ser escrito e referenciar uma foto do protótipo. Explique o que está na foto ao leitor.}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{assets/prototipo-e-deteccao.jpg}
+  \caption{(a) Bench prototype: DHT11 and DS1302 on an Arduino Uno. (b) Detections on a frame of the public clip, from a hive left out of training.}
+  \label{fig:prototype}
+\end{figure}
+
+Fig.~\ref{fig:prototype}(a) shows the bench prototype used to validate the environmental record before the station board. A DHT11 on the breadboard and a DS1302 clock module feed an Arduino Uno, which prints over the serial port one CSV line with date, time, temperature, and humidity every three seconds, with the same date and time format that the station will write to the card.
 
 \section{Results}
 \label{sec:results}
 
-\rigel{AC Semana 8:
-Nesse momento já teremos a seção Introdução, a seção II e a Seção III que trata do método que o grupo propõe.
-Atividade relativa a parte escrita: Elaborar a seção IV que deverá tratar sobre os resultados experimentais:
+The bench prototype produced a steady record, with lines such as \texttt{2026-09-15 21:50:25, 24.8, 72.0} for date and time, temperature in \textdegree{}C, and relative humidity in percent. The station sketch for the ESP32, with the camera and the DS18B20, compiles, and it has not yet run on the board.
 
-(1) Apresente, em detalhes, os resultados qualitativos e quantitativos obtidos até o momento. No mínimo resultados qualitativos.
+\begin{table}[t]
+\caption{Median visible bees per 5~s window on the 15~s public clip.}
+\label{tab:counts}
+\centering
+\begin{tabular}{lccc}
+\hline
+Window & 25 frames/s & 10 frames/s & 5 frames/s \\
+\hline
+0 to 5 s & 33 & 33 & 34 \\
+5 to 10 s & 32 & 32 & 31 \\
+10 to 15 s & 24 & 24 & 25 \\
+\hline
+\end{tabular}
+\end{table}
 
-(2) Elabore o Abstract e Conclusions.}
+The detector ran on a 15~s clip of hive \texttt{20230711b}, which is left out of its training, at 1280 by 720 pixels, the resolution of the station. Table~\ref{tab:counts} gives the median number of visible bees in each 5~s window at three frame rates. The median changed by at most one bee between 25 and 5 frames per second, which suggests that the ten frames per second planned for the station are enough for this measure. The counts have not yet been compared with the labels. Fig.~\ref{fig:prototype}(b) shows where the detector fails. It finds the bees spread over the board and the grass, but it misses most of the bees crowded at the entrance slot, misses one bee on the pale wood, and marks one bee with three overlapping boxes.
 
-\rigel{AC Semana 9: Continuar na elaboração da seção IV que deverá tratar sobre os resultados experimentais:
-
-(1) Introduza na Seção IV (Results), em detalhes, os resultados quantitativos obtidos (além de resultados qualitativos já conseguidos).
-
-(2) Refine o abstract. Na última linha do abstract devemos inserir algum resultado que seja interessante para o leitor e que represente algum aspecto considerado como a maior contribuição do grupo
-
-(3) Refine a seção Conclusions. Insira resultados que resumam a avaliação do sistema embarcado proposto.}
+The turnover measure is not usable yet. It gave between 1530 and 5088 bees per minute with about 30 bees in view, and it grew with the frame rate, from 528 to 792 bees per minute at 5 frames per second and from 2820 to 5088 at 25. When the detector loses a bee in one frame and finds it in the next, the measure records a departure and an arrival that did not happen. Tuning it requires the hand-labelled trajectories of the full dataset.
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+This work presented a low-cost station that records the entrance activity and the temperature of a beehive on a memory card, without a network, and counts the visible bees offline with a detector trained on public data. With no hive available, the detector was evaluated on public videos of real hives, and on a clip left out of training its count per window stayed within one bee between 25 and 5 frames per second. Its weak points are crowded bees at the entrance and duplicate boxes, and the turnover measure still counts detection gaps as movement. The next steps are running the camera and the DS18B20 on the ESP32, filming the public videos with the OV2640 to measure the loss caused by the camera, comparing the counts with the labels of the full dataset, adding the card, the DS3231, and the AHT20, and installing the station at a real hive.
 
 \bibliographystyle{ieeetr}
 \bibliography{refs}
