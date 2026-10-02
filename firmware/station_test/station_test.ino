@@ -32,7 +32,7 @@
 // A senha da rede fica em credenciais.h, que nao vai para o repositorio.
 // Copie credenciais.h.exemplo como credenciais.h e escolha a senha antes
 // de gravar.
-#include "credenciais.h"
+#include "credentials.h"
 
 const char *REDE = "colmeia-g4";
 
