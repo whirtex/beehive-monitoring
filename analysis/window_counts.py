@@ -10,8 +10,8 @@ experimental: ainda nao foi ajustada contra o gabarito e, no clipe de amostra,
 conta as falhas de deteccao de um quadro para o outro como aparecimentos.
 
 Uso (na pasta beehive-monitoring):
-    .venv/bin/python analysis/janelas.py video.mp4 --fps 10 --janela 5
-    .venv/bin/python analysis/janelas.py capturas/2026-09-28_1430 --janela 5
+    .venv/bin/python analysis/window_counts.py video.mp4 --fps 10 --janela 5
+    .venv/bin/python analysis/window_counts.py capturas/2026-09-28_1430 --janela 5
 """
 
 import argparse
