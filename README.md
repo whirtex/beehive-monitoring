@@ -1,153 +1,166 @@
-# Monitoramento de colmeias de baixo custo
+# Low-cost beehive monitoring
 
-Protótipo da disciplina IBM3118, Sistemas Embarcados e IoT (Ibmec, 2026), do Grupo 4:
-Igor Costa, Jorge Alves, Ian Dias e Davi Ito.
+Prototype for the course IBM3118, Embedded Systems and IoT (Ibmec, 2026), by
+Group 4: Igor Costa, Jorge Alves, Ian Dias and Davi Ito.
 
-O objetivo é uma estação barata, presa à colmeia, que registra a atividade na entrada
-e a temperatura sem abrir a caixa e sem depender de rede. Uma câmera fotografa a
-entrada em janelas curtas, um sensor mede a temperatura dentro da colmeia e outro
-mede temperatura e umidade do lado de fora. Tudo vai para um cartão microSD, que é
-recolhido uma vez por semana. No computador, um detector conta as abelhas visíveis
-em cada janela, e cada contagem fica ao lado da temperatura do mesmo horário.
+This project was developed in a repository shared with another project of the
+course, and it was moved here with its commit history filtered. The commits
+before the English translation have the files and comments in Portuguese. The
+translation is in the commits that follow.
 
-A estação conta abelhas visíveis. Ela não conta entradas e saídas, não segue uma
-abelha de uma janela para outra (a câmera fica desligada entre as janelas) e não
-detecta pólen, *Varroa*, rainha ou enxameação.
+The goal is a cheap station, attached to the hive, that records the activity at
+the entrance and the temperature without opening the box and without relying on
+a network. A camera photographs the entrance in short windows, one sensor
+measures the temperature inside the hive and another measures temperature and
+humidity outside. Everything goes to a microSD card, collected once a week. On a
+computer, a detector counts the visible bees in each window, and each count sits
+next to the temperature of the same time.
 
-**O grupo não tem acesso a uma colmeia.** Com a aprovação do professor, o detector é
-avaliado em vídeos públicos de colmeias reais, com as abelhas marcadas à mão, e a
-instalação em campo fica para trabalho futuro. O experimento central é filmar esses
-vídeos com a câmera da estação e medir quanto a câmera barata atrapalha a contagem.
+The station counts visible bees. It does not count entries and exits, it does not
+follow a bee from one window to the next (the camera is off between windows) and
+it does not detect pollen, *Varroa*, a queen or swarming.
 
-## Estado atual
+**The group has no access to a hive.** With the professor's approval, the
+detector is evaluated on public videos of real hives, with the bees labelled by
+hand, and the field installation is left as future work. The central experiment
+is to film those videos with the station's camera and measure how much the cheap
+camera hurts the count.
 
-| Parte | Situação |
+## Current status
+
+| Part | Status |
 |---|---|
-| Temperatura e umidade com horário (bancada) | Funcionando no Arduino Uno: DHT11 e DS1302 geram o CSV na serial |
-| Câmera OV2640 e DS18B20 na ESP32 | Sketch de teste pronto e compilando; ainda não rodou na placa |
-| Detector de abelhas | Funcionando no computador, no clipe de amostra público |
-| Abelhas visíveis por janela | Funcionando; o valor quase não muda entre 25, 10 e 5 quadros por segundo |
-| Renovação (abelhas que aparecem e somem) | Experimental; os números ainda não fazem sentido, ver "Resultados" |
-| Gravação no cartão, DS3231 e AHT20 | Dependem de compra, feita depois da AP1 (`lista-de-compras.md`) |
-| Comparação com o gabarito | Pendente; depende da base completa (7,8 GB) |
+| Temperature and humidity with time (bench) | Working on the Arduino Uno: a DHT11 and a DS1302 produce the CSV on the serial port |
+| OV2640 camera and DS18B20 on the ESP32 | Test sketch ready and compiling; it has not run on the board yet |
+| Bee detector | Working on the computer, on the public sample clip |
+| Visible bees per window | Working; the value barely changes between 25, 10 and 5 frames per second |
+| Turnover (bees that appear and disappear) | Experimental; the numbers do not make sense yet, see "Results so far" |
+| Recording to the card, DS3231 and AHT20 | Depend on a purchase, which comes after the first assessment (AP1) |
+| Comparison with the ground truth | Pending; it depends on the full dataset (7.8 GB) |
 
 ## Hardware
 
-### Estação
+### Station
 
-| Componente | Função |
+| Component | Role |
 |---|---|
-| ESP32-WROVER-DEV v1.6 | Placa principal; tem PSRAM, necessária para a câmera em 1280 × 720 |
-| Câmera OV2640 | Entrada da colmeia, 1280 × 720, JPEG |
-| DS18B20 (TO-92), selado | Temperatura dentro da colmeia |
-| AHT20 | Temperatura e umidade do lado de fora, na sombra |
-| DS3231 com CR2032 | Data e hora sem rede |
-| Leitor de microSD sem conversor de nível e cartão de 32 GB | Imagens e CSV |
-| Power bank ou carregador de celular | Alimentação do protótipo |
+| ESP32-WROVER-DEV v1.6 | Main board; it has PSRAM, which the camera needs at 1280 × 720 |
+| OV2640 camera | Hive entrance, 1280 × 720, JPEG |
+| DS18B20 (TO-92), sealed | Temperature inside the hive |
+| AHT20 | Temperature and humidity outside, in the shade |
+| DS3231 with CR2032 | Date and time without a network |
+| microSD reader without a level converter, and a 32 GB card | Images and CSV |
+| Power bank or phone charger | Power for the prototype |
 
-### Ligações na ESP32-WROVER-DEV
+### Wiring on the ESP32-WROVER-DEV
 
-A câmera, a PSRAM e a flash ocupam quase todos os pinos. Sobram 2, 12, 13, 14, 15,
-32 e 33.
+The camera, the PSRAM and the flash take almost all of the pins. Pins 2, 12, 13,
+14, 15, 32 and 33 are left.
 
-| Função | Pinos |
+| Function | Pins |
 |---|---|
-| Cartão microSD, modo 1 bit: CLK, CMD, D0 | 14, 15, 2 |
-| I2C: DS3231 e AHT20 | 32, 33 |
-| DS18B20, 1-Wire | 13, com 4,7 kΩ para o 3,3 V |
-| Livre, só para algo que fique em nível baixo no boot | 12 |
+| microSD card, 1-bit mode: CLK, CMD, D0 | 14, 15, 2 |
+| I2C: DS3231 and AHT20 | 32, 33 |
+| DS18B20, 1-Wire | 13, with 4.7 kΩ to 3.3 V |
+| Free, only for something that stays low at boot | 12 |
 
-Com a face plana do DS18B20 virada para você e os terminais para baixo, a ordem é
-GND, dados e 3,3 V.
+With the flat face of the DS18B20 toward you and the leads pointing down, the
+order is GND, data and 3.3 V.
 
-### Bancada no Arduino Uno
+### Bench on the Arduino Uno
 
-| De | Para |
+| From | To |
 |---|---|
-| DHT11 VCC / dados / GND | 5 V / pino 2 / GND, com 10 kΩ entre VCC e dados |
+| DHT11 VCC / data / GND | 5 V / pin 2 / GND, with 10 kΩ between VCC and data |
 | DS1302 VCC / GND | 5 V / GND |
-| DS1302 CLK / DAT / RST | pinos 5 / 4 / 3 |
-
-Fotos da bancada em `assets/`.
+| DS1302 CLK / DAT / RST | pins 5 / 4 / 3 |
 
 ## Software
 
-Placas na Arduino IDE: "ESP32 Wrover Module", com PSRAM em "Enabled", e "Arduino Uno".
-Bibliotecas: OneWire e DallasTemperature (ESP32); DHT sensor library, da Adafruit, e
-Rtc by Makuna (Uno).
+Boards in the Arduino IDE: "ESP32 Wrover Module", with PSRAM on "Enabled", and
+"Arduino Uno". Libraries: OneWire and DallasTemperature (ESP32); DHT sensor
+library, by Adafruit, and Rtc by Makuna (Uno). The `station_test` sketch needs a
+local `credentials.h` file with the password of the network that the board
+creates; copy
+[`credentials.h.example`](firmware/station_test/credentials.h.example), choose
+the password and keep `credentials.h` out of Git.
 
-No computador: Python 3 com `ultralytics`, `opencv-python`, `numpy`, `scipy` e
-`matplotlib` (lista em `analysis/requirements.txt`).
+On the computer: Python 3 with `ultralytics`, `opencv-python`, `numpy`, `scipy`
+and `matplotlib` (list in `analysis/requirements.txt`).
 
-| Firmware (`firmware/`) | Para que serve |
+| Firmware (`firmware/`) | What it does |
 |---|---|
-| `sensor_dht11` | Primeiro teste do DHT11 no Uno |
-| `sensor_dht11_rtc` | DHT11 e DS1302 no Uno, gerando o CSV com data e hora |
-| `estacao_teste` | Câmera e DS18B20 na ESP32: a placa cria a rede `colmeia-g4` e serve as fotos e a temperatura |
+| `dht11_rtc_sensor` | DHT11 and DS1302 on the Uno, producing the CSV with date and time |
+| `station_test` | Camera and DS18B20 on the ESP32: the board creates the network `beehive-g4` and serves the photos and the temperature |
 
-| Análise (`analysis/`) | Para que serve |
+The `station_test` sketch is the bench test version of the station. It has no
+card, no DS3231 and no AHT20, and it creates its own Wi-Fi network, unlike the
+station described in the article, which records to the card without a network.
+
+| Analysis (`analysis/`) | What it does |
 |---|---|
-| `janelas.py` | Roda o detector num vídeo ou numa pasta de fotos e resume cada janela |
-| `capturar_esp32.py` | Baixa uma janela de fotos da ESP32 pelo Wi-Fi da placa |
-| `figura_arquitetura.py` | Diagrama do método usado no artigo |
+| `window_counts.py` | Runs the detector on a video or a folder of photos and summarizes each window |
+| `architecture_figure.py` | Method diagram used in the article |
 
-## Modelo
+## Model
 
-**Detector.** YOLO11n do projeto [Beehaviour](https://github.com/jordicalsinabaldoma/beehavior-upc)
-(UPC, 2026), com uma classe, "bee", entrada de 640 pixels e confiança mínima de 0,40.
-Os autores o treinaram com 1.756 quadros da base de Sledevič e Matuzevičius e
-deixaram três colmeias fora do treino. Nessas três, relatam precisão de 0,81 a 0,90 e
-recall de 0,80 a 0,91 por quadro.
+**Detector.** YOLO11n from the
+[Beehaviour](https://github.com/jordicalsinabaldoma/beehavior-upc) project (UPC,
+2026), with one class, "bee", a 640-pixel input and a minimum confidence of 0.40.
+The authors trained it on 1,756 frames of the Sledevič and Matuzevičius dataset
+and left three hives out of the training. On those three, they report a
+precision of 0.81 to 0.90 and a recall of 0.80 to 0.91 per frame.
 
-**Base de dados.** Sledevič e Matuzevičius, *Labeled dataset for bee detection and
-direction estimation on entrance to beehive*, Data in Brief, v. 52, 2024,
-[doi:10.1016/j.dib.2024.110060](https://doi.org/10.1016/j.dib.2024.110060). São 7.200
-quadros de 8 colmeias na Lituânia, filmados com celular a 30 cm da tábua de pouso, em
-1920 × 1080 e 50 quadros por segundo, com as abelhas marcadas à mão.
+**Dataset.** Sledevič and Matuzevičius, *Labeled dataset for bee detection and
+direction estimation on entrance to beehive*, Data in Brief, vol. 52, 2024,
+[doi:10.1016/j.dib.2024.110060](https://doi.org/10.1016/j.dib.2024.110060). It has
+7,200 frames of 8 hives in Lithuania, filmed with a phone 30 cm from the landing
+board, at 1920 × 1080 and 50 frames per second, with the bees labelled by hand.
 
-**O que fazemos com ele.** Do Beehaviour usamos só a detecção. O rastreio e a
-contagem de entradas e saídas deles ficam de fora: eles mesmos relatam que essa
-contagem erra de 30% a 75% para menos quando há muitas abelhas na tábua. No lugar,
-`janelas.py` reduz o vídeo para a taxa de quadros da estação e calcula, para cada
-janela:
+**What we do with it.** From Beehaviour we use only the detection. Their tracking
+and entry and exit counting stay out: they themselves report that this counting
+is off by 30% to 75% on the low side when there are many bees on the board.
+Instead, `window_counts.py` reduces the video to the frame rate of the station
+and computes, for each window:
 
-- **abelhas visíveis**: mediana, mínimo e máximo do número de abelhas por quadro;
-- **renovação** (experimental): quantas abelhas aparecem e somem da imagem, ligando
-  as detecções de quadros vizinhos pela distância entre os centros. Uma abelha só
-  conta como aparecida depois de vista em dois quadros, e como sumida depois de dois
-  quadros ausente.
+- **visible bees**: median, minimum and maximum number of bees per frame;
+- **turnover** (experimental): how many bees appear in and disappear from the
+  image, linking the detections of neighboring frames by the distance between
+  centers. A bee only counts as appeared after being seen in two frames, and as
+  disappeared after being absent for two frames.
 
-## Resultados até agora
+## Results so far
 
-Clipe de amostra do Beehaviour: 15 s da colmeia `20230711b`, que ficou fora do treino,
-em 1280 × 720, a mesma resolução da estação. Janelas de 5 s. Saída completa em
-`results/janelas_amostra.txt`.
+Beehaviour sample clip: 15 s of hive `20230711b`, which was left out of the
+training, at 1280 × 720, the same resolution as the station. Windows of 5 s. Full
+output in `results/sample_windows.txt`.
 
-| Janela | Visíveis a 25 quadros/s | a 10 quadros/s | a 5 quadros/s |
+| Window | Visible at 25 frames/s | at 10 frames/s | at 5 frames/s |
 |---|---|---|---|
-| 0 a 5 s | 33 | 33 | 34 |
-| 5 a 10 s | 32 | 32 | 31 |
-| 10 a 15 s | 24 | 24 | 25 |
+| 0 to 5 s | 33 | 33 | 34 |
+| 5 to 10 s | 32 | 32 | 31 |
+| 10 to 15 s | 24 | 24 | 25 |
 
-A contagem de visíveis quase não muda com a taxa de quadros, o que sugere que 10
-quadros por segundo bastam para ela. Ainda não foi comparada com o gabarito.
+The count of visible bees barely changes with the frame rate, which suggests that
+10 frames per second are enough for it. It has not been compared with the ground
+truth yet.
 
-A renovação não funciona ainda: deu de 1.530 a 5.088 por minuto, com cerca de 30
-abelhas na imagem, e triplica quando a taxa de quadros sobe. Quando o detector perde
-uma abelha num quadro e a encontra no seguinte, o script registra um sumiço e um
-aparecimento que não aconteceram. A correção depende das trajetórias marcadas à mão
-da base completa.
+The turnover does not work yet: it gave 1,530 to 5,088 per minute, with about 30
+bees in the image, and it grows with the frame rate. When the detector loses a
+bee in one frame and finds it in the next, the script records a disappearance and
+an appearance that did not happen. The fix depends on the hand-labelled
+trajectories of the full dataset.
 
-No quadro de `results/deteccao_amostra.jpg`, o detector acha as abelhas espalhadas
-pela tábua e pela grama, mas perde a maior parte das que estão amontoadas na fenda,
-deixa passar uma abelha sobre a madeira clara e marca uma mesma abelha com três
-caixas sobrepostas.
+In the frame of `results/sample_detections.jpg`, the detector finds the bees
+spread over the board and the grass, but it misses most of those crowded at the
+slot, misses one bee on the pale wood and marks one bee with three overlapping
+boxes.
 
-## Como usar
+## How to use
 
-### Análise no computador
+### Analysis on the computer
 
-Dentro de `beehive-monitoring/`, uma vez só:
+In the repository root, once:
 
 ```
 python3 -m venv .venv
@@ -157,98 +170,111 @@ curl -L -o analysis/models/bee11n.pt \
   https://github.com/jordicalsinabaldoma/beehavior-upc/raw/master/models/bee11n.pt
 ```
 
-Os pesos (21 MB) não vão para o repositório. Depois:
+The weights (21 MB) are not in the repository. Then:
 
 ```
-.venv/bin/python analysis/janelas.py video.mp4 --fps 10 --janela 5 --csv saida.csv
+.venv/bin/python analysis/window_counts.py video.mp4 --fps 10 --window 5 --csv output.csv
 ```
 
-O clipe de amostra fica em `media/entrada_cenital_muestra.mp4` no repositório do
-Beehaviour. A base completa está no [Mendeley](https://doi.org/10.17632/8gb9r2yhfc.6).
+The sample clip is `media/entrada_cenital_muestra.mp4` in the Beehaviour
+repository. The full dataset is on
+[Mendeley](https://doi.org/10.17632/8gb9r2yhfc.6). To run the detector on photos
+instead of a video, put the JPEG files in a folder with the milliseconds since
+the start of the window as the file name (for example `0000.jpg`, `0100.jpg`) and
+pass the folder instead of the video.
 
-### Teste da câmera e do DS18B20
+### Testing the camera and the DS18B20
 
-1. Ligar o DS18B20 no GPIO 13, com o resistor de 4,7 kΩ para o 3,3 V.
-2. Gravar `firmware/estacao_teste` na ESP32 e abrir o monitor serial a 115200. A
-   temperatura aparece a cada 3 s.
-3. Conectar o computador à rede `colmeia-g4`, senha `<ap-password>`, e abrir
-   `http://192.168.4.1`.
-4. Passar um vídeo da base num celular ou monitor, com a câmera apontada para a tela.
-5. `.venv/bin/python analysis/capturar_esp32.py --segundos 5` baixa uma janela de fotos
-   para `capturas/`, e `janelas.py` roda o detector sobre a pasta.
+1. Connect the DS18B20 to GPIO 13, with the 4.7 kΩ resistor to 3.3 V.
+2. Create `credentials.h` from the example, upload `firmware/station_test` to the
+   ESP32 and open the serial monitor at 115200. The temperature shows up every
+   3 s.
+3. Connect the computer to the network `beehive-g4`, with the password from
+   `credentials.h`, and open `http://192.168.4.1`.
+4. Play a video from the dataset on a phone or monitor, with the camera pointed
+   at the screen.
 
-## Customizações
+## Customizations
 
-O que foi desenvolvido além do uso padrão das bibliotecas, dos exemplos e do modelo
-pronto:
+What was developed beyond the standard use of the libraries, the examples and the
+ready-made model:
 
-- **Distribuição de pinos da ESP32-WROVER-DEV.** A câmera deixa sete pinos livres, e
-  o GPIO 12 impede o boot se tiver pull-up. O DS1302 do laboratório gastaria três
-  pinos, e um segundo DHT11 não teria onde ligar, porque o protocolo dele não tem
-  endereço. A solução foi pôr o DS3231 e o AHT20 no mesmo I2C e o DS18B20 no 1-Wire,
-  deixando um pino de sobra.
-- **Sensor interno selado.** O DS18B20 mede só temperatura e pode ser coberto por
-  inteiro, sem terminal exposto ao própolis. Um sensor de umidade precisa de contato
-  com o ar. A umidade passou a ser medida só do lado de fora.
-- **Mapeamento da câmera.** Os exemplos da Espressif usam por padrão a placa
-  AI-Thinker. A WROVER-DEV usa o mapeamento do WROVER-KIT, e com o errado a câmera não
-  inicia.
-- **Firmware de teste sem rede externa.** A placa cria a própria rede Wi-Fi, porque a
-  rede da faculdade exige login pelo navegador. A foto é tirada na hora do pedido, com
-  o quadro mais novo. A conversão do DS18B20, de 750 ms, roda sem travar o servidor.
-- **Relógio DS1302 na bancada.** O módulo do laboratório não é I2C; usa a biblioteca
-  Rtc by Makuna com `ThreeWire`, e o sketch acerta a hora pela data de compilação.
-- **Contagem por janela no lugar do rastreio.** Do Beehaviour usamos só o detector. A
-  contagem de entradas e saídas deles foi trocada pela mediana de abelhas visíveis na
-  janela, que não depende de seguir cada abelha.
-- **Taxa de quadros da estação.** O script reduz os vídeos da base, gravados a 50
-  quadros por segundo, para a taxa da estação, para avaliar o detector nas condições
-  em que ela vai capturar.
-- **Fotos da ESP32 como entrada.** O script lê uma pasta de fotos com o tempo em
-  milissegundos no nome, no formato que `capturar_esp32.py` grava.
-- **Renovação experimental.** Ligação entre quadros vizinhos com confirmação em dois
-  quadros e tolerância de um quadro ausente. Ainda não funciona, como descrito acima.
+- **Pin allocation of the ESP32-WROVER-DEV.** The camera leaves seven pins free,
+  and GPIO 12 prevents boot if it has a pull-up. The lab DS1302 would use three
+  pins, and a second DHT11 would have nowhere to connect, because its protocol
+  has no address. The solution was to put the DS3231 and the AHT20 on the same
+  I2C bus and the DS18B20 on 1-Wire, leaving one spare pin.
+- **Sealed interior sensor.** The DS18B20 measures only temperature and can be
+  covered entirely, with no terminal exposed to propolis. A humidity sensor needs
+  contact with the air. Humidity is now measured only outside.
+- **Camera pin map.** The Espressif examples default to the AI-Thinker board. The
+  WROVER-DEV uses the WROVER-KIT map, and with the wrong one the camera does not
+  start.
+- **Test firmware without an external network.** The board creates its own Wi-Fi
+  network, because the college network requires a browser login. The photo is
+  taken at the time of the request, with the newest frame. The 750 ms DS18B20
+  conversion runs without blocking the server.
+- **DS1302 clock on the bench.** The lab module is not I2C; it uses the Rtc by
+  Makuna library with `ThreeWire`, and the sketch sets the time from the compile
+  date.
+- **Counting per window instead of tracking.** From Beehaviour we use only the
+  detector. Their entry and exit counting was replaced by the median of visible
+  bees in the window, which does not depend on following each bee.
+- **Station frame rate.** The script reduces the dataset videos, recorded at 50
+  frames per second, to the rate of the station, to evaluate the detector under
+  the conditions in which it will capture.
+- **Photos as input.** The script reads a folder of photos with the time in
+  milliseconds in the name.
+- **Experimental turnover.** Linking between neighboring frames with confirmation
+  in two frames and a tolerance of one absent frame. It does not work yet, as
+  described above.
 
-## Limitações
+## Limitations
 
-- Não há colmeia. Os resultados vêm de vídeos públicos filmados com celular, e a
-  câmera da estação ainda não foi testada.
-- A contagem ainda não foi comparada com o gabarito.
-- O detector erra em aglomerações na fenda e pode marcar a mesma abelha mais de uma
-  vez.
-- A renovação ainda não funciona.
-- Sem cartão, DS3231 e AHT20, a estação ainda não grava nada sozinha.
-- A alimentação é por power bank; o painel solar e a bateria ficaram para uma versão
-  futura.
+- There is no hive. The results come from public videos filmed with a phone, and
+  the station's camera has not been tested yet.
+- The count has not been compared with the ground truth.
+- The detector fails on crowds at the slot and can mark the same bee more than
+  once.
+- The turnover does not work yet.
+- Without the card, the DS3231 and the AHT20, the station does not record
+  anything by itself yet.
+- Power comes from a power bank; the solar panel and the battery were left for a
+  future version.
 
-## Créditos e licenças
+## Credits and licenses
 
-- Detector: pesos `bee11n.pt` do projeto Beehaviour (J. Calsina, L. Santamaria, G.
-  Biosca e V. Abelló, UPC), sob AGPL-3.0.
-- Imagens e marcações: base de Sledevič e Matuzevičius, sob CC BY 4.0. O quadro de
-  `results/deteccao_amostra.jpg` vem dessa base.
-- Método de contagem por imagem com registro de horário também usado por M. Rovai
-  no tutorial [Counting objects with YOLO](https://mjrovai.github.io/EdgeML_Made_Ease_ebook/raspi/counting_objects_yolo/counting_objects_yolo.html).
+The code of this repository is under the MIT license (see [`LICENSE`](LICENSE)).
+The parts below keep their own licenses.
 
-## Organização da pasta
+- Detector: the `bee11n.pt` weights of the Beehaviour project (J. Calsina,
+  L. Santamaria, G. Biosca and V. Abelló, UPC), under AGPL-3.0. The scripts also
+  use Ultralytics, which is AGPL-3.0 too. The weights are not in the repository.
+- Images and labels: the dataset of Sledevič and Matuzevičius, under CC BY 4.0.
+  The frame in `results/sample_detections.jpg` and panel (b) of
+  `assets/prototype-and-detections.jpg` come from this dataset.
+- Counting method with image and time record, also used by M. Rovai in the
+  tutorial [Counting objects with YOLO](https://mjrovai.github.io/EdgeML_Made_Ease_ebook/raspi/counting_objects_yolo/counting_objects_yolo.html).
 
-| Pasta | Conteúdo |
+## Repository layout
+
+| Folder | Contents |
 |---|---|
-| `firmware/` | Sketches do Uno e o teste da ESP32 |
-| `analysis/` | Contagem por janela, captura da ESP32 e figura do artigo |
-| `results/` | Saída do detector no clipe de amostra |
-| `assets/` | Fotos da bancada e o diagrama do método |
+| `firmware/` | Uno sketch and the ESP32 test sketch |
+| `analysis/` | Window counting and the figure of the article |
+| `results/` | Detector output on the sample clip |
+| `assets/` | The figures of the article |
+| `paper/` | Article (`.tex`) and `refs.bib` |
+| `docs/` | Design decisions |
 
-## Documentos
+## Documents
 
-| Arquivo | Conteúdo |
+| File | Contents |
 |---|---|
-| `beehive-monitoring.tex` | Artigo, em inglês, no modelo do SBrT |
-| `beehive-monitoring-pt.md` | Tradução de apoio do artigo |
-| `refs.bib` | Referências do artigo e a entrada do repositório |
-| `decisoes-do-projeto.md` | Decisões tomadas, com o porquê, e o que está em aberto |
-| `plano-do-prototipo.md` | Etapas da montagem e materiais |
-| `lista-de-compras.md` | O que falta comprar, com preços |
-| `requirements.md`, `specifications.md` | Requisitos e especificação iniciais |
-| `research-notes.md`, `reference-contributions.md` | Notas sobre as referências |
-| `guia-geral.md` | Checklist das atividades da disciplina |
+| `paper/beehive-monitoring.tex` | Article, in English, in the SBrT template |
+| `paper/refs.bib` | References of the article and the repository entry |
+| `docs/design-decisions.md` | Decisions taken, with the reason, and what is still open |
+
+The `.tex` uses the paths of the Overleaf project (`assets/` in the same folder as
+the file). To compile from the repository, copy that folder into `paper/` or
+adjust the paths.
