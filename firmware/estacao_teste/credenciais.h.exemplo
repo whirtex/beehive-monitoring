@@ -1,0 +1,23 @@
+/*
+  Modelo da senha da rede que a placa cria.
+
+  Este arquivo e o que vai para o repositorio. Ele nao tem a senha de
+  verdade: serve so para quem clonar o projeto saber o que precisa criar.
+
+  Para usar:
+    1. copie este arquivo como credenciais.h, na mesma pasta
+    2. troque a senha por uma de 8 a 63 caracteres
+    3. grave normalmente
+
+  O credenciais.h esta bloqueado no .gitignore e nunca sobe para o
+  GitHub. O repositorio e publico, entao senha em codigo ficaria visivel
+  para qualquer pessoa, e apagar depois nao resolve: fica no historico
+  do git.
+*/
+
+#ifndef CREDENCIAIS_H
+#define CREDENCIAIS_H
+
+const char *SENHA_AP = "troque por uma senha de 8 a 63 caracteres";
+
+#endif

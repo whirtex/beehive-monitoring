@@ -5,7 +5,7 @@
   propria, e o computador busca as fotos por ela:
 
     rede:  colmeia-g4
-    senha: <ap-password>
+    senha: a de credenciais.h
     fotos: http://192.168.4.1/        pagina que atualiza sozinha
            http://192.168.4.1/foto    uma foto JPEG de 1280 x 720
            http://192.168.4.1/temp    temperatura do DS18B20, em texto
@@ -29,8 +29,12 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// A senha da rede fica em credenciais.h, que nao vai para o repositorio.
+// Copie credenciais.h.exemplo como credenciais.h e escolha a senha antes
+// de gravar.
+#include "credenciais.h"
+
 const char *REDE = "colmeia-g4";
-const char *SENHA = "<ap-password>";
 
 #define PINO_DS18B20 13
 #define INTERVALO_CSV_MS 3000
@@ -145,7 +149,7 @@ void setup() {
 
   bool camera_ok = iniciar_camera();
 
-  WiFi.softAP(REDE, SENHA);
+  WiFi.softAP(REDE, SENHA_AP);
   Serial.print("# rede ");
   Serial.print(REDE);
   Serial.print(", endereco http://");
