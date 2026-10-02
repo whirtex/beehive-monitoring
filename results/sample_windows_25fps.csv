@@ -1,4 +1,4 @@
-inicio_s,quadros,visiveis_mediana,visiveis_min,visiveis_max,aparecem,somem,renovacao_por_min
+start_s,frames,visible_median,visible_min,visible_max,appear,disappear,turnover_per_min
 0.0,125,33.0,18,42,439,409,5088.0
 5.0,125,32.0,21,43,381,387,4608.0
 10.0,125,24.0,15,33,231,239,2820.0

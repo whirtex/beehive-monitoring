@@ -1,12 +1,12 @@
-entrada_cenital_muestra.mp4: 375 quadros a 25.0 por segundo
-{'inicio_s': 0.0, 'quadros': 125, 'visiveis_mediana': 33.0, 'visiveis_min': 18, 'visiveis_max': 42, 'aparecem': 439, 'somem': 409, 'renovacao_por_min': 5088.0}
-{'inicio_s': 5.0, 'quadros': 125, 'visiveis_mediana': 32.0, 'visiveis_min': 21, 'visiveis_max': 43, 'aparecem': 381, 'somem': 387, 'renovacao_por_min': 4608.0}
-{'inicio_s': 10.0, 'quadros': 125, 'visiveis_mediana': 24.0, 'visiveis_min': 15, 'visiveis_max': 33, 'aparecem': 231, 'somem': 239, 'renovacao_por_min': 2820.0}
-entrada_cenital_muestra.mp4: 150 quadros a 10.0 por segundo
-{'inicio_s': 0.0, 'quadros': 50, 'visiveis_mediana': 33.0, 'visiveis_min': 18, 'visiveis_max': 42, 'aparecem': 201, 'somem': 171, 'renovacao_por_min': 2232.0}
-{'inicio_s': 5.0, 'quadros': 50, 'visiveis_mediana': 32.0, 'visiveis_min': 23, 'visiveis_max': 39, 'aparecem': 155, 'somem': 160, 'renovacao_por_min': 1890.0}
-{'inicio_s': 10.0, 'quadros': 50, 'visiveis_mediana': 24.0, 'visiveis_min': 16, 'visiveis_max': 31, 'aparecem': 124, 'somem': 131, 'renovacao_por_min': 1530.0}
-entrada_cenital_muestra.mp4: 75 quadros a 5.0 por segundo
-{'inicio_s': 0.0, 'quadros': 25, 'visiveis_mediana': 34.0, 'visiveis_min': 23, 'visiveis_max': 40, 'aparecem': 84, 'somem': 48, 'renovacao_por_min': 792.0}
-{'inicio_s': 5.0, 'quadros': 25, 'visiveis_mediana': 31.0, 'visiveis_min': 23, 'visiveis_max': 39, 'aparecem': 59, 'somem': 68, 'renovacao_por_min': 762.0}
-{'inicio_s': 10.0, 'quadros': 25, 'visiveis_mediana': 25.0, 'visiveis_min': 19, 'visiveis_max': 30, 'aparecem': 41, 'somem': 47, 'renovacao_por_min': 528.0}
+entrada_cenital_muestra.mp4: 375 frames at 25.0 per second
+{'start_s': 0.0, 'frames': 125, 'visible_median': 33.0, 'visible_min': 18, 'visible_max': 42, 'appear': 439, 'disappear': 409, 'turnover_per_min': 5088.0}
+{'start_s': 5.0, 'frames': 125, 'visible_median': 32.0, 'visible_min': 21, 'visible_max': 43, 'appear': 381, 'disappear': 387, 'turnover_per_min': 4608.0}
+{'start_s': 10.0, 'frames': 125, 'visible_median': 24.0, 'visible_min': 15, 'visible_max': 33, 'appear': 231, 'disappear': 239, 'turnover_per_min': 2820.0}
+entrada_cenital_muestra.mp4: 150 frames at 10.0 per second
+{'start_s': 0.0, 'frames': 50, 'visible_median': 33.0, 'visible_min': 18, 'visible_max': 42, 'appear': 201, 'disappear': 171, 'turnover_per_min': 2232.0}
+{'start_s': 5.0, 'frames': 50, 'visible_median': 32.0, 'visible_min': 23, 'visible_max': 39, 'appear': 155, 'disappear': 160, 'turnover_per_min': 1890.0}
+{'start_s': 10.0, 'frames': 50, 'visible_median': 24.0, 'visible_min': 16, 'visible_max': 31, 'appear': 124, 'disappear': 131, 'turnover_per_min': 1530.0}
+entrada_cenital_muestra.mp4: 75 frames at 5.0 per second
+{'start_s': 0.0, 'frames': 25, 'visible_median': 34.0, 'visible_min': 23, 'visible_max': 40, 'appear': 84, 'disappear': 48, 'turnover_per_min': 792.0}
+{'start_s': 5.0, 'frames': 25, 'visible_median': 31.0, 'visible_min': 23, 'visible_max': 39, 'appear': 59, 'disappear': 68, 'turnover_per_min': 762.0}
+{'start_s': 10.0, 'frames': 25, 'visible_median': 25.0, 'visible_min': 19, 'visible_max': 30, 'appear': 41, 'disappear': 47, 'turnover_per_min': 528.0}
