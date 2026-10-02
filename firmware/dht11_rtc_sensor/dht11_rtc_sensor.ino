@@ -1,43 +1,43 @@
 /*
-  DHT11 e relogio DS1302 no Arduino Uno.
-  Gera na porta serial o CSV que a estacao vai gravar no cartao.
+  DHT11 and DS1302 clock on the Arduino Uno.
+  It prints on the serial port the CSV that the station will write to the card.
 
-  Ligacao:
+  Wiring:
     DHT11 VCC   -> 5V
-    DHT11 DADOS -> pino 2
+    DHT11 DATA  -> pin 2
     DHT11 GND   -> GND
-    resistor de 10 kOhm entre VCC e DADOS
+    10 kOhm resistor between VCC and DATA
 
     DS1302 VCC -> 5V
     DS1302 GND -> GND
-    DS1302 CLK -> pino 5
-    DS1302 DAT -> pino 4
-    DS1302 RST -> pino 3
+    DS1302 CLK -> pin 5
+    DS1302 DAT -> pin 4
+    DS1302 RST -> pin 3
 
-  O DS1302 nao e I2C: usa tres fios e a biblioteca Rtc by Makuna.
-  Sem a bateria CR2032 no suporte, o relogio zera a cada vez que a
-  alimentacao cai e volta para a hora da ultima gravacao.
+  The DS1302 is not I2C: it uses three wires and the Rtc by Makuna library.
+  Without the CR2032 battery in the holder, the clock resets every time the
+  power drops and goes back to the time of the last upload.
 */
 
 #include "DHT.h"
 #include <ThreeWire.h>
 #include <RtcDS1302.h>
 
-#define PINO_DHT 2
-#define TIPO_DHT DHT11
+#define DHT_PIN 2
+#define DHT_TYPE DHT11
 
-DHT dht(PINO_DHT, TIPO_DHT);
+DHT dht(DHT_PIN, DHT_TYPE);
 
-// ordem dos pinos: DAT, CLK, RST
-ThreeWire fios(4, 5, 3);
-RtcDS1302<ThreeWire> rtc(fios);
+// pin order: DAT, CLK, RST
+ThreeWire wires(4, 5, 3);
+RtcDS1302<ThreeWire> rtc(wires);
 
 void setup() {
   Serial.begin(9600);
   dht.begin();
   rtc.Begin();
 
-  RtcDateTime compilado = RtcDateTime(__DATE__, __TIME__);
+  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
 
   if (rtc.GetIsWriteProtected()) {
     rtc.SetIsWriteProtected(false);
@@ -45,33 +45,33 @@ void setup() {
   if (!rtc.GetIsRunning()) {
     rtc.SetIsRunning(true);
   }
-  if (!rtc.IsDateTimeValid() || rtc.GetDateTime() < compilado) {
-    rtc.SetDateTime(compilado);
+  if (!rtc.IsDateTimeValid() || rtc.GetDateTime() < compiled) {
+    rtc.SetDateTime(compiled);
   }
 
-  Serial.println("data_hora,temperatura_c,umidade_pct");
+  Serial.println("datetime,temperature_c,humidity_pct");
 }
 
 void loop() {
   delay(3000);
 
-  RtcDateTime agora = rtc.GetDateTime();
-  float umidade = dht.readHumidity();
-  float temperatura = dht.readTemperature();
+  RtcDateTime now = rtc.GetDateTime();
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
 
-  if (isnan(umidade) || isnan(temperatura)) {
-    Serial.println("erro na leitura do sensor");
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("sensor read error");
     return;
   }
 
-  char data_hora[20];
-  snprintf(data_hora, sizeof(data_hora), "%04u-%02u-%02u %02u:%02u:%02u",
-           agora.Year(), agora.Month(), agora.Day(),
-           agora.Hour(), agora.Minute(), agora.Second());
+  char datetime[20];
+  snprintf(datetime, sizeof(datetime), "%04u-%02u-%02u %02u:%02u:%02u",
+           now.Year(), now.Month(), now.Day(),
+           now.Hour(), now.Minute(), now.Second());
 
-  Serial.print(data_hora);
+  Serial.print(datetime);
   Serial.print(",");
-  Serial.print(temperatura, 1);
+  Serial.print(temperature, 1);
   Serial.print(",");
-  Serial.println(umidade, 1);
+  Serial.println(humidity, 1);
 }
