@@ -1,0 +1,20 @@
+.DS_Store
+
+# access point password of the test station: this repository is public
+firmware/**/credentials.h
+
+# local Python environment
+.venv/
+__pycache__/
+
+# detector weights (21 MB, AGPL-3.0): downloaded as the README explains
+analysis/models/
+
+# photos from the board and videos for the detector
+captures/
+*.mp4
+*.mov
+*.MOV
+*.m4v
+*.webm
+*.avi
