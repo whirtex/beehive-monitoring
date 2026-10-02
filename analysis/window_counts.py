@@ -1,17 +1,19 @@
-"""Conta as abelhas visiveis em cada janela de observacao.
+"""Counts the visible bees in each observation window.
 
-Entrada: um video da entrada da colmeia ou uma pasta de fotos JPEG baixadas da
-ESP32 por capturar_esp32.py. O detector e o YOLO11n do projeto Beehaviour,
-treinado na base de Sledevic e Matuzevicius (ver o README).
+Input: a video of the hive entrance, or a folder of JPEG photos whose file
+names are the milliseconds since the start of the window (for example
+0000.jpg, 0100.jpg). The detector is the YOLO11n of the Beehaviour project,
+trained on the dataset of Sledevic and Matuzevicius (see the README).
 
-Para cada janela, o script informa a mediana, o minimo e o maximo de abelhas
-por quadro. A renovacao (abelhas que aparecem e somem da imagem) e
-experimental: ainda nao foi ajustada contra o gabarito e, no clipe de amostra,
-conta as falhas de deteccao de um quadro para o outro como aparecimentos.
+For each window, the script reports the median, the minimum and the maximum
+number of bees per frame. The turnover (bees that appear in and disappear from
+the image) is experimental: it has not been tuned against the ground truth and,
+on the sample clip, it counts detection misses from one frame to the next as
+appearances.
 
-Uso (na pasta beehive-monitoring):
-    .venv/bin/python analysis/window_counts.py video.mp4 --fps 10 --janela 5
-    .venv/bin/python analysis/window_counts.py capturas/2026-09-28_1430 --janela 5
+Usage (in the repository root):
+    .venv/bin/python analysis/window_counts.py video.mp4 --fps 10 --window 5
+    .venv/bin/python analysis/window_counts.py photos/2026-09-28_1430 --window 5
 """
 
 import argparse
@@ -23,130 +25,130 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from ultralytics import YOLO
 
-PASTA = Path(__file__).resolve().parent
-PESOS = PASTA / "models" / "bee11n.pt"
+HERE = Path(__file__).resolve().parent
+WEIGHTS = HERE / "models" / "bee11n.pt"
 
 
-def quadros_do_video(caminho, fps_alvo):
-    cap = cv2.VideoCapture(str(caminho))
-    fps_orig = cap.get(cv2.CAP_PROP_FPS)
-    passo = max(1, round(fps_orig / fps_alvo))
+def frames_from_video(path, target_fps):
+    cap = cv2.VideoCapture(str(path))
+    source_fps = cap.get(cv2.CAP_PROP_FPS)
+    step = max(1, round(source_fps / target_fps))
     i = 0
     while True:
         ok, img = cap.read()
         if not ok:
             break
-        if i % passo == 0:
-            yield i / fps_orig, img
+        if i % step == 0:
+            yield i / source_fps, img
         i += 1
 
 
-def quadros_da_pasta(caminho):
-    # capturar_esp32.py grava cada foto com os milissegundos desde o inicio no nome
-    for arq in sorted(caminho.glob("*.jpg")):
-        yield int(arq.stem) / 1000, cv2.imread(str(arq))
+def frames_from_folder(path):
+    # each photo carries the milliseconds since the start of the window in its name
+    for file in sorted(path.glob("*.jpg")):
+        yield int(file.stem) / 1000, cv2.imread(str(file))
 
 
-def detectar(modelo, fonte, conf):
-    quadros = []
-    for t, img in fonte:
-        r = modelo.predict(img, conf=conf, imgsz=640, verbose=False)[0]
-        quadros.append((t, r.boxes.xyxy.cpu().numpy(), img if not quadros else None))
-    return quadros
+def detect(model, source, conf):
+    frames = []
+    for t, img in source:
+        r = model.predict(img, conf=conf, imgsz=640, verbose=False)[0]
+        frames.append((t, r.boxes.xyxy.cpu().numpy(), img if not frames else None))
+    return frames
 
 
-def centros(caixas):
-    return np.column_stack(((caixas[:, 0] + caixas[:, 2]) / 2, (caixas[:, 1] + caixas[:, 3]) / 2))
+def centers(boxes):
+    return np.column_stack(((boxes[:, 0] + boxes[:, 2]) / 2, (boxes[:, 1] + boxes[:, 3]) / 2))
 
 
-def renovacao(quadros, raio, confirmar=2, tolerancia=1):
-    """Liga as abelhas de quadros vizinhos pela distancia entre os centros.
-    Uma abelha so conta como aparecida depois de vista em `confirmar` quadros,
-    e como sumida depois de ausente por mais de `tolerancia` quadros."""
-    trilhas = []  # [x, y, vezes_vista, quadros_ausente, confirmada]
-    eventos = []
-    for t, caixas, _ in quadros:
-        pts = centros(caixas) if len(caixas) else np.zeros((0, 2))
-        livres = set(range(len(pts)))
-        if trilhas and len(pts):
-            a = np.array([[tr[0], tr[1]] for tr in trilhas])
+def turnover(frames, radius, confirm=2, tolerance=1):
+    """Links the bees of neighboring frames by the distance between centers.
+    A bee only counts as appeared after being seen in `confirm` frames, and as
+    disappeared after being absent for more than `tolerance` frames."""
+    tracks = []  # [x, y, times_seen, frames_absent, confirmed]
+    events = []
+    for t, boxes, _ in frames:
+        pts = centers(boxes) if len(boxes) else np.zeros((0, 2))
+        free = set(range(len(pts)))
+        if tracks and len(pts):
+            a = np.array([[tr[0], tr[1]] for tr in tracks])
             d = np.linalg.norm(a[:, None] - pts[None], axis=2)
             for r, c in zip(*linear_sum_assignment(d)):
-                if d[r, c] <= raio:
-                    tr = trilhas[r]
+                if d[r, c] <= radius:
+                    tr = tracks[r]
                     tr[0], tr[1] = pts[c]
                     tr[2] += 1
                     tr[3] = -1
-                    livres.discard(c)
-                    if not tr[4] and tr[2] >= confirmar:
+                    free.discard(c)
+                    if not tr[4] and tr[2] >= confirm:
                         tr[4] = True
-                        eventos.append((t, "aparece"))
-        vivas = []
-        for tr in trilhas:
+                        events.append((t, "appear"))
+        alive = []
+        for tr in tracks:
             tr[3] += 1
-            if tr[3] > tolerancia:
+            if tr[3] > tolerance:
                 if tr[4]:
-                    eventos.append((t, "some"))
+                    events.append((t, "disappear"))
             else:
-                vivas.append(tr)
-        trilhas = vivas + [[*pts[c], 1, 0, False] for c in livres]
-    return eventos
+                alive.append(tr)
+        tracks = alive + [[*pts[c], 1, 0, False] for c in free]
+    return events
 
 
-def resumir(quadros, eventos, janela):
-    dur = quadros[-1][0] + (quadros[-1][0] - quadros[-2][0])
-    linhas, ini = [], 0.0
-    while ini + janela <= dur + 1e-6:
-        fim = ini + janela
-        n = [len(c) for t, c, _ in quadros if ini <= t < fim]
-        ap = sum(1 for t, e in eventos if ini <= t < fim and e == "aparece")
-        so = sum(1 for t, e in eventos if ini <= t < fim and e == "some")
-        linhas.append({
-            "inicio_s": round(ini, 1),
-            "quadros": len(n),
-            "visiveis_mediana": float(np.median(n)),
-            "visiveis_min": min(n),
-            "visiveis_max": max(n),
-            "aparecem": ap,
-            "somem": so,
-            "renovacao_por_min": round((ap + so) / 2 * 60 / janela, 1),
+def summarize(frames, events, window):
+    duration = frames[-1][0] + (frames[-1][0] - frames[-2][0])
+    rows, start = [], 0.0
+    while start + window <= duration + 1e-6:
+        end = start + window
+        n = [len(c) for t, c, _ in frames if start <= t < end]
+        appear = sum(1 for t, e in events if start <= t < end and e == "appear")
+        disappear = sum(1 for t, e in events if start <= t < end and e == "disappear")
+        rows.append({
+            "start_s": round(start, 1),
+            "frames": len(n),
+            "visible_median": float(np.median(n)),
+            "visible_min": min(n),
+            "visible_max": max(n),
+            "appear": appear,
+            "disappear": disappear,
+            "turnover_per_min": round((appear + disappear) / 2 * 60 / window, 1),
         })
-        ini = fim
-    return linhas
+        start = end
+    return rows
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("entrada", type=Path, help="video ou pasta de fotos da ESP32")
-    p.add_argument("--pesos", type=Path, default=PESOS)
-    p.add_argument("--fps", type=float, default=10, help="so para video")
-    p.add_argument("--janela", type=float, default=5, help="segundos")
+    p.add_argument("input", type=Path, help="video or folder of photos")
+    p.add_argument("--weights", type=Path, default=WEIGHTS)
+    p.add_argument("--fps", type=float, default=10, help="video only")
+    p.add_argument("--window", type=float, default=5, help="seconds")
     p.add_argument("--conf", type=float, default=0.40)
     p.add_argument("--csv", type=Path)
-    p.add_argument("--figura", type=Path, help="primeiro quadro com as deteccoes")
+    p.add_argument("--figure", type=Path, help="first frame with the detections")
     a = p.parse_args()
 
-    fonte = quadros_da_pasta(a.entrada) if a.entrada.is_dir() else quadros_do_video(a.entrada, a.fps)
-    quadros = detectar(YOLO(a.pesos), fonte, a.conf)
-    fps = (len(quadros) - 1) / (quadros[-1][0] - quadros[0][0])
-    tamanhos = np.concatenate([np.hypot(c[:, 2] - c[:, 0], c[:, 3] - c[:, 1]) for _, c, _ in quadros if len(c)])
-    # a 10 quadros/s, uma abelha andando nao passa do proprio tamanho entre dois quadros
-    raio = np.median(tamanhos) * (10 / fps)
-    linhas = resumir(quadros, renovacao(quadros, raio), a.janela)
+    source = frames_from_folder(a.input) if a.input.is_dir() else frames_from_video(a.input, a.fps)
+    frames = detect(YOLO(a.weights), source, a.conf)
+    fps = (len(frames) - 1) / (frames[-1][0] - frames[0][0])
+    sizes = np.concatenate([np.hypot(c[:, 2] - c[:, 0], c[:, 3] - c[:, 1]) for _, c, _ in frames if len(c)])
+    # at 10 frames/s, a walking bee does not move more than its own size between two frames
+    radius = np.median(sizes) * (10 / fps)
+    rows = summarize(frames, turnover(frames, radius), a.window)
 
-    print(f"{a.entrada}: {len(quadros)} quadros a {fps:.1f} por segundo")
-    for l in linhas:
-        print(l)
+    print(f"{a.input}: {len(frames)} frames at {fps:.1f} per second")
+    for row in rows:
+        print(row)
     if a.csv:
         with open(a.csv, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=linhas[0].keys())
+            w = csv.DictWriter(f, fieldnames=rows[0].keys())
             w.writeheader()
-            w.writerows(linhas)
-    if a.figura:
-        _, caixas, img = quadros[0]
-        for x1, y1, x2, y2 in caixas.astype(int):
+            w.writerows(rows)
+    if a.figure:
+        _, boxes, img = frames[0]
+        for x1, y1, x2, y2 in boxes.astype(int):
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 220, 255), 2)
-        cv2.imwrite(str(a.figura), img)
+        cv2.imwrite(str(a.figure), img)
 
 
 if __name__ == "__main__":
