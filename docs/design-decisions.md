@@ -46,10 +46,20 @@ the end. While an item is open, the article should not claim anything about it.
   must not block the entrance or interfere with the ventilation.
 - Initial resolution of 1280 × 720. It works on a preset schedule, from 07:00 to
   17:00.
-- Two configurations will be tested, each for 3 days: 5 seconds of capture at 10
-  frames per second every 5 minutes, and 10 seconds at 10 frames per second every
-  5 minutes. They will be compared on the quality of the count, the space used on
-  the card and the energy use.
+- Decision of 6 October 2026: the camera records **10 seconds at 10 frames per
+  second every 5 minutes**. This replaces the plan of testing 5 s and 10 s for 3
+  days each.
+  - On two minutes of hive `20230711a` (left out of the detector's training), at
+    1280 × 720 and 10 frames per second, the median of a 5 s window was 1.5 bees
+    (6%) from the median of its minute in the median case and up to 9 bees (33%)
+    away. With 10 s, the median difference was the same, but the worst case fell
+    to 6 bees (19%); with 30 s, to 1.5 bees (6%). Script:
+    `analysis/window_length.py`; output in `results/window_length_20230711a.txt`.
+  - The 32 GB card holds twice the images without strain: at about 60 KB per
+    JPEG, not yet measured on the board, 10 s every 5 min from 07:00 to 17:00 is
+    about 5 GB a week.
+  - Limit: one hive and two minutes of detector counts, not yet checked against
+    the labels.
 - Images are saved as a sequence of JPEG files, not as H.264 or H.265 video. The
   original images are kept during the tests, so the analysis can be redone.
 
@@ -76,6 +86,11 @@ the end. While an item is open, the article should not claim anything about it.
 - The system does not depend on Wi-Fi. Images and environmental data stay on the
   card, which is copied once a week and taken to a computer for analysis. LoRa is
   not needed in the first version.
+- Decision of 5 October 2026: in the networked mode, a future extension, the
+  counts and temperatures go to the server over MQTT. Since the ESP32 cannot run
+  the detector, the counting moves to an old phone or a Raspberry Pi at the hive.
+  If Wi-Fi reaches the hive, that device publishes directly; if not, it sends over
+  LoRa to a gateway, which publishes. Photos do not go over the network.
 - The images are analyzed afterwards, away from the hive. An existing AI model is
   tested first; if it is not good enough on the project images, a model is
   created or tuned with the group's own images.
@@ -111,6 +126,43 @@ professor accepted validation with public videos.
   which only justified leaving out audio, and Tashakkori et al., whose role as a
   network counterpoint Henry et al. already fills, go out.
 
+## Observation intervals
+
+Test of 5 October 2026, to answer whether observing the entrance in intervals
+loses the information that a continuous record would give.
+
+- **Data.** Beehive Metrics dataset (Kaggle, HOBOS project): arrivals and
+  departures counted at the entrance every minute, at two German hives, from 2017
+  to 2019. The complete days from May to September were used: 303 at Bad
+  Schwartau and 185 at Würzburg. The license is not declared on Kaggle, so the
+  files stay out of the repository.
+- **Simulation.** `analysis/sampling_intervals.py` observes 1 minute every N
+  minutes, multiplies by N and compares with the continuous record, at every
+  possible offset.
+- **Result** (median error and, in parentheses, the limit of 95% of the cases):
+
+  | Every | Day total | Hour total | Peak at the right hour |
+  |---|---|---|---|
+  | 2 min | 0.2–0.3% (1–2%) | 1.2% (5–6%) | 94–97% |
+  | 5 min | 0.6% (3–4%) | 2.5–2.8% (11–13%) | 88–92% |
+  | 10 min | 0.9–1.0% (4–7%) | 4.0–4.5% (18–20%) | 82–87% |
+  | 15 min | 1.2–1.4% (6–9%) | 5.3–6.0% (24–26%) | 76–82% |
+  | 30 min | 1.9–2.2% (10–15%) | 8.3–9.6% (39%) | 66–71% |
+
+  Each range goes from one hive to the other. Full results in
+  `results/sampling_intervals_hobos.csv`.
+- **Reading.** Every 5 minutes, the curve of the day comes out practically equal
+  to that of the continuous record. What is lost first is the hour-by-hour
+  detail, and only from 15 minutes on.
+- **Limits.** The dataset counts bees crossing the entrance; the station measures
+  bees visible in the image. The dataset has no resolution below 1 minute, so
+  this validates 1-minute windows, not 5 s ones. The "peak at the right hour" is
+  demanding: when two neighboring hours have almost equal activity, a swap between
+  them counts as an error.
+- **In the article.** The dataset is credited in a footnote, like Beehaviour,
+  because it is not an academic publication, and the article keeps ten
+  references.
+
 ## Power
 
 - The prototype runs on a power bank or a phone charger, with no solar panel. The
@@ -119,8 +171,9 @@ professor accepted validation with public videos.
   article must not claim that the prototype runs autonomously.
 - The consumption will be measured with the lab multimeter, in series with the
   supply, in each state of the board.
-- The electronics sit in a sealed plastic jar, with holes for the lens and for
-  the cable of the interior sensor.
+- The electronics sit in a 3D-printed enclosure, with holes for the lens and for
+  the cable of the interior sensor. Decision of 5 October 2026, replacing the
+  sealed plastic jar.
 
 ## Open decisions
 
@@ -145,7 +198,7 @@ professor accepted validation with public videos.
 - Confirm that the board records 1280 × 720 at 10 frames per second to the card in
   1-bit mode.
 - Measure the real consumption of the board, the camera, the card and the sensors
-  in the two capture configurations.
+  with 10 s windows.
 - Measure the temperature difference between the DS18B20 and the AHT20 with the two
   side by side.
 
