@@ -92,6 +92,7 @@ and `matplotlib` (list in `analysis/requirements.txt`).
 |---|---|
 | `dht11_rtc_sensor` | DHT11 and DS1302 on the Uno, producing the CSV with date and time |
 | `station_test` | Camera and DS18B20 on the ESP32: the board creates the network `beehive-g4` and serves the photos and the temperature |
+| `station_test_dht11` | The same test with the lab DHT11 in place of the DS18B20, used in the AP1 demonstration |
 
 The `station_test` sketch is the bench test version of the station. It has no
 card, no DS3231 and no AHT20, and it creates its own Wi-Fi network, unlike the
