@@ -25,7 +25,7 @@ BG_PC = "#eaf2fb"
 BLOCKS = [
     # (x, title, lines, background)
     (0.0, "Sensors", ["OV2640", "DS18B20 in", "AHT20 out"], BG_HIVE),
-    (2.35, "ESP32", ["5 s window", "every 5 min;", "CSV: 3 min"], BG_HIVE),
+    (2.35, "ESP32", ["10 s window", "every 5 min;", "CSV: 3 min"], BG_HIVE),
     (4.7, "microSD", ["JPEG frames", "and CSV,", "DS3231 time"], "#ffffff"),
     (7.05, "Detector", ["YOLO11n,", "bees per frame"], BG_PC),
     (9.4, "Record", ["count per", "window with", "temperature"], BG_PC),
