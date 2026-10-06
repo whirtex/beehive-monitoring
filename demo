@@ -1,0 +1,17 @@
+#!/bin/sh
+# Detector demonstration: runs the model live on a video of a real hive,
+# in a window, with the boxes, the count and the speed of the model.
+#
+# ./demo               60 s of the video 20230711a-fan.mp4 (from 30 s on)
+# ./demo video.mp4     the same, on another video (from start to end)
+# ./demo backup        opens the video already generated, if the live one fails
+#
+# Keys in the window: q or Esc closes, space pauses.
+cd "$(dirname "$0")" || exit 1
+if [ "$1" = "backup" ]; then
+    exec open media/detection_20230711a.mp4
+fi
+if [ -n "$1" ]; then
+    exec .venv/bin/python analysis/live_demo.py "$1" --fps 10
+fi
+exec .venv/bin/python analysis/live_demo.py media/20230711a-fan.mp4 --start 30 --duration 60 --fps 10
