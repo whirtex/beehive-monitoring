@@ -100,6 +100,8 @@ station described in the article, which records to the card without a network.
 | Analysis (`analysis/`) | What it does |
 |---|---|
 | `window_counts.py` | Runs the detector on a video or a folder of photos and summarizes each window |
+| `sampling_intervals.py` | Simulates the capture schedule on a continuous public record of entrance traffic |
+| `window_length.py` | Compares 5, 10 and 30 s windows with the whole minute, to choose the window length |
 | `architecture_figure.py` | Method diagram used in the article |
 
 ## Model
@@ -155,6 +157,28 @@ In the frame of `results/sample_detections.jpg`, the detector finds the bees
 spread over the board and the grass, but it misses most of those crowded at the
 slot, misses one bee on the pale wood and marks one bee with three overlapping
 boxes.
+
+### Observation interval
+
+The public videos last seconds, so they cannot show what a capture every 5
+minutes misses over a day. For that, `sampling_intervals.py` uses the
+[Beehive Metrics](https://www.kaggle.com/datasets/se18m502/bee-hive-metrics)
+dataset of the HOBOS project, with arrivals and departures counted at the
+entrance every minute, at two German hives, from 2017 to 2019 (303 and 185
+complete days from May to September). It keeps 1 minute every N, multiplies by N
+and compares with the full record. Full output in
+`results/sampling_intervals_hobos.txt`.
+
+| Every | Error in the day total | Error in the hour total | Peak at the right hour |
+|---|---|---|---|
+| 5 min | 0.6% (95% of cases: up to 3–4%) | 2.5–2.8% (up to 11–13%) | 88–92% |
+| 15 min | 1.2–1.4% (up to 6–9%) | 5.3–6.0% (up to 24–26%) | 76–82% |
+| 30 min | 1.9–2.2% (up to 10–15%) | 8.3–9.6% (up to 39%) | 66–71% |
+
+Every 5 minutes, the curve of the day comes out practically equal to the
+continuous one. The dataset counts bees crossing the entrance, not bees visible
+in the image, and has no resolution below 1 minute, so it validates 1-minute
+windows, not 5 s ones.
 
 ## How to use
 
@@ -250,6 +274,9 @@ The parts below keep their own licenses.
 - Detector: the `bee11n.pt` weights of the Beehaviour project (J. Calsina,
   L. Santamaria, G. Biosca and V. Abelló, UPC), under AGPL-3.0. The scripts also
   use Ultralytics, which is AGPL-3.0 too. The weights are not in the repository.
+- Entrance traffic: the [Beehive Metrics](https://www.kaggle.com/datasets/se18m502/bee-hive-metrics)
+  dataset, from the [HOBOS](https://www.hobos.de) project. Kaggle does not declare
+  its license, so the files are not in the repository.
 - Images and labels: the dataset of Sledevič and Matuzevičius, under CC BY 4.0.
   The frame in `results/sample_detections.jpg` and panel (b) of
   `assets/prototype-and-detections.jpg` come from this dataset.
@@ -261,8 +288,8 @@ The parts below keep their own licenses.
 | Folder | Contents |
 |---|---|
 | `firmware/` | Uno sketch and the ESP32 test sketch |
-| `analysis/` | Window counting and the figure of the article |
-| `results/` | Detector output on the sample clip |
+| `analysis/` | Window counting, the interval simulation and the figure of the article |
+| `results/` | Detector output on the sample clip and the interval simulation |
 | `assets/` | The figures of the article |
 | `paper/` | Article (`.tex`) and `refs.bib` |
 | `docs/` | Design decisions |
