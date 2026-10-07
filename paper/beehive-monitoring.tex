@@ -70,7 +70,11 @@ A DS18B20 measures the temperature inside the hive and an AHT20 measures tempera
 
 \subsection{Storage, Timekeeping, and Power}
 
-The camera, the PSRAM, and the flash leave seven free pins on the board. The microSD card takes three of them in one-bit mode, a DS3231 real-time clock and the AHT20 share the two lines of an I2C bus, and the DS18B20 uses one pin on its 1-Wire bus. The clock keeps timestamps consistent without any network. The card is retrieved about once a week and analysed on a separate computer, so a failing link cannot interrupt data collection, and remote transmission as in Henry et al. remains an extension \cite{henry2019precision}. The prototype runs from a power bank. A solar panel with a battery is left for a later version, so this work makes no claim of autonomous operation.
+The camera, the PSRAM, and the flash leave seven free pins on the board. The microSD card takes three of them in one-bit mode, a DS3231 real-time clock and the AHT20 share the two lines of an I2C bus, and the DS18B20 uses one pin on its 1-Wire bus. The clock keeps timestamps consistent without any network. The card is retrieved about once a week and analysed on a separate computer, so a failing link cannot interrupt data collection. The prototype runs from a power bank.
+
+\subsection{Networked and Self-Powered Variant}
+
+A second version of the station, developed as secondary work, adds its own power and a network. A solar panel of about 3~W charges an 18650 battery with a protection circuit through a charge controller, and a boost regulator delivers 5~V to the board, so the station needs no outlet. The counting moves to the hive: the ESP32 cannot run the detector, so an old smartphone or a Raspberry Pi beside it runs the same YOLO11n and publishes only counts and temperatures over MQTT. Where the Wi-Fi of the property reaches the hive, it publishes directly; where it does not, the readings travel by LoRa to a gateway that forwards them over MQTT. The images stay on the card, since they do not fit a low-rate link. Henry et al. collected hive data over a wireless network that many apiaries lack \cite{henry2019precision}; this variant adds remote reading without giving up the offline record. It has not been built or tested, so this work makes no claim about its performance or of autonomous operation.
 
 \section{The Method}
 \label{sec:method}
