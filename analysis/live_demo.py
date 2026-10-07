@@ -85,8 +85,9 @@ def main():
                 cv2.rectangle(img, (x1, y1), (x2, y2), YELLOW, 2)
             video_t = frame_no / orig_fps
             panel(img, [
+                "Model: YOLO11n (Beehaviour)",
                 f"Bees detected: {len(boxes)}",
-                f"Model: {np.mean(ms[-30:]):.0f} ms per frame",
+                f"Speed: {np.mean(ms[-30:]):.0f} ms per frame",
                 f"Video time: {video_t:.0f} s",
             ])
             cv2.imshow(window, img)
