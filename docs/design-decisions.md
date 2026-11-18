@@ -1,215 +1,124 @@
 # Design decisions
 
-The main decisions of the beehive station, grouped by topic. Open items are at
-the end. While an item is open, the article should not claim anything about it.
+Each decision holds until it is replaced here, with its reason.
 
-## Scope of the first version
+## Scope
 
-- One camera watches the hive entrance.
-- Two environmental sensors: one for temperature inside the hive and one for
-  temperature and humidity outside.
-- An acoustic sensor may come in a later stage. Vibration and weight sensors are
-  out of the first version.
-- The AI only detects and counts the bees visible in the images. The system
-  estimates the activity of the bees at the entrance.
-- The system must not claim that it identifies individual entries and exits,
-  disease, a missing queen or swarming.
+- The station measures the occupancy of the entrance (visible bees in each photo)
+  and the temperature. It does not count entries and exits, does not follow a bee
+  from one photo to the next and does not detect pollen, *Varroa*, the queen or
+  swarming. Sound, vibration and weight are left out.
+- **Occupancy, not traffic.** The visible bees also rise when they fan at the
+  entrance in the heat: in the hand-labelled test videos, 22% and 12% of the bees
+  are fanning. The count is read as occupancy of the landing board next to the
+  temperature, not as foraging.
+- **No entries and exits.** The professor suggested tracking each bee (MOT) to
+  count entries and exits. With one photo every 10 s a bee crosses the entrance
+  between photos, so photos cannot be linked. Tracking needs video, and filming
+  all day draws more energy than the solar panel delivers.
+- The group has no hive. The professor accepted the validation on public videos;
+  the field installation is future work.
 
-## Environmental sensors
+## Two modes
 
-- **Inside the hive, a DS18B20 in a TO-92 package; outside, near the entrance and
-  in the shade, an AHT20.** Decision of 27 September 2026. The DS18B20 replaces
-  the AHT20 at the interior point for three reasons:
-  - it is the smallest sensor available and fits inside the hive without
-    bothering the bees;
-  - it measures only temperature, so it can be sealed completely. Bees cover any
-    foreign object in the hive with propolis, and a humidity sensor needs contact
-    with the air to work;
-  - it uses the 1-Wire protocol, with a single pin, and the group already has
-    five units, bought for the predictive maintenance project and unused since
-    temperature left that project.
-- The swap has a cost: the system no longer measures the humidity inside. Humidity
-  is measured only outside.
-- The interior sensor is sealed with heat-shrink tubing or epoxy, with no exposed
-  leads, and it is powered and read through a three-wire cable that goes to the
-  electronics mounted outside.
-- The lab DHT11 does not go into the station. It stays on the Arduino Uno, on the
-  bench.
-- The sensors read every 3 minutes. Because the two sensors differ, they sit side
-  by side for a few hours before installation, and the mean temperature
-  difference between them is subtracted in the analysis.
+- **Mode 1, the main one and the only one built:** own power (solar panel and
+  battery), everything on the microSD card, collected when the user wants.
+- **Mode 2, not built:** with mains and a network at the site, the ESP32 sends
+  each photo over Wi-Fi to a server running the same detector.
 
-## Camera
+## Camera and schedule
 
-- Mounted outside the hive, above and slightly in front of the entrance, pointed
-  at where the bees come in and go out, on a firm mount with rain protection. It
-  must not block the entrance or interfere with the ventilation.
-- Initial resolution of 1280 × 720. It works on a preset schedule, from 07:00 to
-  17:00.
-- Decision of 6 October 2026: the camera records **10 seconds at 10 frames per
-  second every 5 minutes**. This replaces the plan of testing 5 s and 10 s for 3
-  days each.
-  - On two minutes of hive `20230711a` (left out of the detector's training), at
-    1280 × 720 and 10 frames per second, the median of a 5 s window was 1.5 bees
-    (6%) from the median of its minute in the median case and up to 9 bees (33%)
-    away. With 10 s, the median difference was the same, but the worst case fell
-    to 6 bees (19%); with 30 s, to 1.5 bees (6%). Script:
-    `analysis/window_length.py`; output in `results/window_length_20230711a.txt`.
-  - The 32 GB card holds twice the images without strain: at about 60 KB per
-    JPEG, not yet measured on the board, 10 s every 5 min from 07:00 to 17:00 is
-    about 5 GB a week.
-  - Limit: one hive and two minutes of detector counts, not yet checked against
-    the labels.
-- Images are saved as a sequence of JPEG files, not as H.264 or H.265 video. The
-  original images are kept during the tests, so the analysis can be redone.
+- OV2640 camera on the ESP32-WROVER-DEV (the board has the PSRAM the camera
+  needs), above and slightly in front of the entrance, blocking neither the
+  entrance nor the ventilation.
+- **The OV2640 works by day.** In a daylight test it showed detail of distant
+  tiles and leaves and a 3 cm object sharp up close. In a dim room at night the
+  photos come out dark, so the station photographs from 06:00 to 18:00.
+- **800 x 600 (SVGA).** The detector reduces every image to 640 px; on the 3230
+  labelled frames, 640 and 1280 px gave the same result (F1 0.823) and 800 px gave
+  0.832. SVGA is the full-field mode of the OV2640, faster, with smaller photos.
+- **Camera height:** about 25 cm above the landing board with the standard lens
+  (about 66°), so a bee measures about 30 px at 800 px, as in the dataset.
+- **One photo every 10 s, from 06:00 to 18:00.** It replaces the first schedule,
+  10 s bursts at 10 frames per second every 5 min. On the hand-labelled recordings
+  (`results/photo_schedule.txt`): the frame rate does not change the window
+  median; against the median of each 5 min period of a 13 min recording, the 10 s
+  burst missed by 3 bees and 30 photos, one every 10 s, by half a bee; on a 2 h
+  YouTube video, the burst missed by 2 and the photos by half a bee. 5 s errs a
+  little less than 10 s with twice the photos, 20 s already errs 1 and 60 s, 2; 10 s
+  among these is a choice, not a result of the test.
+- The count of each 5 min period is the median of its 30 photos. A period with
+  fewer photos shows a failure of the station at that time.
 
-## Board and storage
+## Sensors
 
-- The board is an **ESP32-WROVER-DEV v1.6**, with an ESP32-WROVER-E module, and a
-  separate **OV2640** camera on the flat connector. It has micro-USB and an
-  embedded CH340C converter, so it uploads firmware straight over the cable. The
-  module has the PSRAM that the camera needs at 1280 × 720.
-- The board **has no microSD slot**, so a separate reader module is wired to the
-  header pins. The card is a 32 GB microSD from a reliable brand.
-- The central board receives the data of both sensors and writes the images and
-  the measurements to the same card. The data is collected about once a week.
-- Images go into folders by date, with the time in the file name. Measurements go
-  into a CSV with date, time, interior temperature, exterior temperature,
-  exterior humidity and, if possible, the battery level.
-- **The station clock is a DS3231** on the same I2C bus as the exterior sensor,
-  so the date and time hold even without Wi-Fi. The lab DS1302 takes three pins,
-  and the board has no free pins for it and for both sensors. The DS1302 stays on
-  the Arduino Uno, on the bench.
+- DS18B20 inside the hive, in the waterproof version with a stainless steel tip:
+  it measures only temperature, so it can be fully sealed against propolis. It
+  sits among the central frames, at the height of the brood nest, where the colony
+  regulates the temperature.
+- AHT20 outside, in the shade, near the entrance, on 3.3 V: on 5 V its I2C
+  pull-ups would put 5 V on the ESP32 pins.
+- Readings every 5 min, so a reading matches a count period.
+- Before the installation, both sensors stay side by side for some hours, and the
+  mean difference is subtracted in the analysis. On the bench they read 27.8 and
+  27.6 °C.
 
-## Communication and analysis
+## Board, card and clock
 
-- The system does not depend on Wi-Fi. Images and environmental data stay on the
-  card, which is copied once a week and taken to a computer for analysis. LoRa is
-  not needed in the first version.
-- Decision of 5 October 2026: in the networked mode, a future extension, the
-  counts and temperatures go to the server over MQTT. Since the ESP32 cannot run
-  the detector, the counting moves to an old phone or a Raspberry Pi at the hive.
-  If Wi-Fi reaches the hive, that device publishes directly; if not, it sends over
-  LoRa to a gateway, which publishes. Photos do not go over the network.
-- The images are analyzed afterwards, away from the hive. An existing AI model is
-  tested first; if it is not good enough on the project images, a model is
-  created or tuned with the group's own images.
-- The AI counts the bees visible in each image or observation window. It does not
-  try to follow the same bee between windows, because the camera is off between
-  captures.
-
-## Model and validation without a hive
-
-Decisions of 27 September 2026. The group has no access to a hive, and the
-professor accepted validation with public videos.
-
-- **Bees and ground truth.** The videos and labels of the dataset of Sledevič and
-  Matuzevičius (Data in Brief, 2024, CC BY 4.0): 7,200 frames of 8 real hives,
-  filmed from above the landing board, at 30 cm, with a phone, at 1920 × 1080 and
-  50 frames per second.
-- **Detector.** The YOLO11n of the Beehaviour project (UPC, 2026, AGPL-3.0),
-  trained on that dataset with the three test hives left out of the training. It
-  is credited in a footnote of the article and in the README, because it is not an
-  academic publication.
-- **Measure 1: visible bees per window.** The median of the number of bees
-  detected in the frames of the window.
-- **Measure 2: turnover per minute.** How many bees appear in and disappear from
-  the field of view inside the window, linking the detections of neighboring
-  frames. It is not a count of entries and exits of the hive. It helps tell bees
-  resting on the board from bees passing by.
-- **Central experiment.** Play the videos on a monitor, film them with the OV2640
-  and compare the count on the original frames and on the filmed ones, against the
-  same ground truth.
-- **Installation on a real hive is future work.**
-- **References.** The article keeps ten academic references. Sledevič and
-  Matuzevičius (2024) and Sledevič et al. (PLOS ONE, 2025) come in. Uthoff et al.,
-  which only justified leaving out audio, and Tashakkori et al., whose role as a
-  network counterpoint Henry et al. already fills, go out.
-
-## Observation intervals
-
-Test of 5 October 2026, to answer whether observing the entrance in intervals
-loses the information that a continuous record would give.
-
-- **Data.** Beehive Metrics dataset (Kaggle, HOBOS project): arrivals and
-  departures counted at the entrance every minute, at two German hives, from 2017
-  to 2019. The complete days from May to September were used: 303 at Bad
-  Schwartau and 185 at Würzburg. The license is not declared on Kaggle, so the
-  files stay out of the repository.
-- **Simulation.** `analysis/sampling_intervals.py` observes 1 minute every N
-  minutes, multiplies by N and compares with the continuous record, at every
-  possible offset.
-- **Result** (median error and, in parentheses, the limit of 95% of the cases):
-
-  | Every | Day total | Hour total | Peak at the right hour |
-  |---|---|---|---|
-  | 2 min | 0.2–0.3% (1–2%) | 1.2% (5–6%) | 94–97% |
-  | 5 min | 0.6% (3–4%) | 2.5–2.8% (11–13%) | 88–92% |
-  | 10 min | 0.9–1.0% (4–7%) | 4.0–4.5% (18–20%) | 82–87% |
-  | 15 min | 1.2–1.4% (6–9%) | 5.3–6.0% (24–26%) | 76–82% |
-  | 30 min | 1.9–2.2% (10–15%) | 8.3–9.6% (39%) | 66–71% |
-
-  Each range goes from one hive to the other. Full results in
-  `results/sampling_intervals_hobos.csv`.
-- **Reading.** Every 5 minutes, the curve of the day comes out practically equal
-  to that of the continuous record. What is lost first is the hour-by-hour
-  detail, and only from 15 minutes on.
-- **Limits.** The dataset counts bees crossing the entrance; the station measures
-  bees visible in the image. The dataset has no resolution below 1 minute, so
-  this validates 1-minute windows, not 5 s ones. The "peak at the right hour" is
-  demanding: when two neighboring hours have almost equal activity, a swap between
-  them counts as an error.
-- **In the article.** The dataset is credited in a footnote, like Beehaviour,
-  because it is not an academic publication, and the article keeps ten
-  references.
+- **Common reader module, over SPI.** The 32 GB microSD card uses the most common
+  reader module, over SPI on pins 14, 15, 2 and 0, powered from 5 V (the board VCC
+  pin); on 3.3 V its regulator does not give the card enough and the card does not
+  answer. The module's level shifter only passes signals one way, which rules out
+  the 1-bit SD mode. The cost is pin 0, of the BOOT button, and a few mA drawn all
+  the time by the module regulator. The reader holds pin 2 high, which blocks
+  uploads: the wire from pin 2 comes out to upload.
+- **DS3231, not the internal clock.** In deep sleep the ESP32 counts time on an
+  on-chip oscillator, which gained 24 s per hour, almost 10 min per day
+  (`results/clock_test.txt`), and resets at every power loss. The DS3231 has its
+  own battery and errs about one minute per year, according to the maker.
+- `environment.csv` has one line every 5 min: date, time, inside temperature,
+  outside temperature and humidity, and battery voltage. The battery column stays
+  empty until the solar supply is built.
+- At an estimated 30 kB per photo, the schedule writes about 130 MB per day, and a
+  32 GB card lasts months.
 
 ## Power
 
-- The prototype runs on a power bank or a phone charger, with no solar panel. The
-  panel of about 3 W, the 18650 battery with BMS protection, the charge controller
-  and the boost converter are left for a future version of the station. The
-  article must not claim that the prototype runs autonomously.
-- The consumption will be measured with the lab multimeter, in series with the
-  supply, in each state of the board.
-- The electronics sit in a 3D-printed enclosure, with holes for the lens and for
-  the cable of the interior sensor. Decision of 5 October 2026, replacing the
-  sealed plastic jar.
+- Designed for a panel of about 3 W, an 18650 battery and a 5 V boost regulator.
+- **The solar supply is not built (agreed with the professor).** The station runs
+  on USB; the consumption is estimated and the panel and battery are sized from
+  it. Building the solar supply is future work.
+- **The board sleeps between photos.** By the estimate of `analysis/autonomy.py`:
+  asleep between photos, about 3.3 Wh per day, and the battery holds almost 3 days
+  without sun; never asleep, about 16 Wh, more than the panel restores. The bench
+  measured 0.6 s awake per photo; the currents are still to be measured.
+- **Charge controller with a battery temperature input.** In a box in the sun the
+  battery can pass 45 °C, above the charge limit of a lithium cell.
+- **PETG or ASA box, in the shade, ventilated.** PLA softens around 55 to 60 °C.
 
-## Open decisions
+## Detector and evaluation
 
-### Image analysis
+- Detector: YOLO11n of the Beehaviour project (UPC, AGPL-3.0), trained on the
+  Sledevič and Matuzevičius dataset with three hives left out. Only the detection
+  is used, with a minimum confidence of 0.40.
+- Evaluation on the three held-out hives (`results/label_evaluation.txt`):
+  precision, recall and F1 per box (IoU 0.5), and mean error, bias, relative error
+  and agreement of the count per frame.
+- **Agreement instead of r².** The r² of the correlation does not see the bias:
+  on hive 20230609b, r² 0.82 and agreement (R² against y = x) 0.38.
+- **No correction of the count.** A linear correction fitted on two hives made the
+  error worse on the third in all three combinations: the bias depends on the
+  scene, and correcting it would need labelled images of the installed hive.
+- **Alternative method: background subtraction**, the method of Tu et al., written
+  by the group (`results/background_subtraction.txt`): F1 0.31 against 0.88.
 
-- Download the full dataset (7.8 GB) and measure the count error against the
-  ground truth, only on the three hives left out of the detector training.
-- Tune the turnover measure against the hand-labelled trajectories. The first
-  untuned test, on the 15 s Beehaviour clip, gave numbers that make no sense:
-  about 200 bees appearing in 5 s with some 30 in the image, and values that
-  change with the frame rate. Detection misses from one frame to the next count
-  as appearances.
-- Choose the metrics to report. Count error and R² are the direct candidates,
-  following Tu et al. MOTA and MOTP do not apply, because they measure tracking.
-- Define the final criterion to consider the count adequate.
+## Open items
 
-### Hardware and power
+While an item is here, the article claims nothing about it.
 
-- Buy the remaining parts, after the first assessment (AP1).
-- Confirm that the 32 GB card works with the board and in which format it has to
-  be.
-- Confirm that the board records 1280 × 720 at 10 frames per second to the card in
-  1-bit mode.
-- Measure the real consumption of the board, the camera, the card and the sensors
-  with 10 s windows.
-- Measure the temperature difference between the DS18B20 and the AHT20 with the two
-  side by side.
-
-### Installation on the hive
-
-- Define the sealing of the DS18B20, the installation point inside the hive, the
-  cable passage and the sealing.
-- Confirm the hive, the place and the conditions in which the tests will run.
-
-### Wi-Fi variant
-
-- Decide whether to develop a second version of the station, with Wi-Fi
-  transmission, for apiaries where the hive is near a network. The offline version
-  stays the main one.
+- Measure the current in each state of the board and run `analysis/autonomy.py`
+  with the measured values.
+- Photograph the labelled frames with the OV2640 to measure the loss caused by the
+  camera.
+- Define the passage of the DS18B20 cable and the sealing of the box.
+- Install the station at a real hive.
