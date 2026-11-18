@@ -1,0 +1,38 @@
+True count (hand-labelled tracks), entrance zone, 2 min at 50 frames/s
+
+20230609b-def: median of 5 bees per frame (from 0 to 13); foraging 15%, defence 30%, fanning 1%, washboarding 0%
+20230711a-fan: median of 21 bees per frame (from 9 to 38); foraging 4%, defence 0%, fanning 22%, washboarding 0%
+20230711b-fan: median of 12 bees per frame (from 0 to 34); foraging 20%, defence 0%, fanning 12%, washboarding 0%
+
+1. Median of a 10 s window taken at fewer frames per second, against the same at 50/s
+   (difference in bees: median and 90th percentile, over the three videos)
+   10 per second: 0.0 (1.0)
+    5 per second: 0.0 (1.0)
+    2 per second: 0.5 (1.0)
+    1 per second: 0.5 (1.5)
+
+2. Error of the schedule against the median of the 2 min (bees: median and 90th percentile)
+                                          20230609b-def   20230711a-fan   20230711b-fan
+   10 s burst at 10/s (100 photos)           1.0 ( 2.0)      3.0 ( 7.0)      4.0 (10.0)
+   10 s burst at 1/s (10 photos)             1.0 ( 2.0)      2.0 ( 6.5)      3.5 (10.0)
+   30 s burst at 1/s (30 photos)             0.0 ( 1.1)      2.0 ( 5.0)      2.0 ( 7.5)
+   1 photo every 5 s (24 photos)             0.0 ( 0.8)      0.5 ( 1.0)      1.0 ( 1.5)
+   1 photo every 10 s (12 photos)            0.2 ( 1.0)      1.0 ( 2.5)      1.0 ( 1.5)
+   1 photo every 20 s (6 photos)             0.5 ( 1.0)      1.5 ( 3.0)      1.0 ( 2.5)
+
+3. Error against the median of each 5 min period, 13 min recording of 20230711a
+   (1320 labelled frames, one every 0.6 s; median 18 bees, from 3 to 47;
+   the 5 min median goes from 14 to 23 over the recording)
+   10 s burst, one per period                3.0 ( 7.0)
+   1 photo every 5 s (60 photos)             0.5 ( 1.0)
+   1 photo every 10 s (30 photos)            0.5 ( 1.5)
+   1 photo every 20 s (15 photos)            1.0 ( 2.0)
+   1 photo every 60 s (5 photos)             2.0 ( 4.0)
+
+4. The same, on the 120 min YouTube video (9NnmqDTvSuw), with the detector count on the board
+   (two frames per second; the 5 min median goes from 25 to 61 over the video)
+   10 s burst, one per period                2.0 ( 5.0)
+   1 photo every 5 s (60 photos)             0.5 ( 1.0)
+   1 photo every 10 s (30 photos)            0.5 ( 1.5)
+   1 photo every 20 s (15 photos)            1.0 ( 2.0)
+   1 photo every 60 s (5 photos)             1.0 ( 4.0)
