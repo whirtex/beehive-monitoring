@@ -87,6 +87,7 @@ metrics.
 | Firmware (`firmware/`) | What it does |
 |---|---|
 | `station/` | The station: photo every 10 s, temperatures every 5 min, card, DS3231, deep sleep, event log and watchdog |
+| `module_test/` | Finds each module every 5 s and writes a photo to the card, for the step-by-step assembly |
 | `card_simulation/` | Receives video frames over USB in place of the camera and writes them to the card, for presentations |
 | `station_test/` | First stage test: the board creates the `beehive-g4` network and serves photos and the temperature |
 | `clock_test/` | Prints the internal clock in deep sleep, for `clock_test.py` |
