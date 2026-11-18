@@ -1,0 +1,14 @@
+Test of the ESP32 internal clock in deep sleep, 04/11/2026
+firmware/clock_test, ESP32-WROVER-DEV board, room at ambient temperature
+
+0.35 h of test, 123 wakes
+the internal clock gained 8.5 s
+that is 24.2 s per hour, or 9.7 min per day
+
+Error in six consecutive stretches of the test:
+  stretch 1: 25.0 s per hour
+  stretch 2: 24.2 s per hour
+  stretch 3: 23.8 s per hour
+  stretch 4: 24.8 s per hour
+  stretch 5: 24.0 s per hour
+  stretch 6: 23.7 s per hour
