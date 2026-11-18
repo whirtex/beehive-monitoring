@@ -10,8 +10,7 @@ __pycache__/
 # detector weights (21 MB, AGPL-3.0): downloaded as the README explains
 analysis/models/
 
-# photos from the board and videos for the detector
-captures/
+# videos for the detector
 *.mp4
 *.mov
 *.MOV
@@ -19,5 +18,10 @@ captures/
 *.webm
 *.avi
 
-# Beehive Metrics dataset (HOBOS): no license declared on Kaggle, download locally
+# local data: the Sledevic and Matuzevicius dataset (Mendeley, CC BY 4.0), too heavy
+# for the repository, the detections cached by the scripts and the YouTube counts
 analysis/data/
+
+# outputs of the presentation simulation
+results/simulation/
+results/presentation/
