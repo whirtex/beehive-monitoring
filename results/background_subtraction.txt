@@ -1,0 +1,13 @@
+YOLO11n against background subtraction, 800 px, 1 frame per second in the entrance zone, IoU >= 0.3
+
+20230609b-def yolo : 119 frames, 5.2 bees per frame | precision 0.817  recall 0.854  F1 0.835 | error 0.94 (18%), bias +0.24, agreement 0.49
+20230609b-def bgsub: 119 frames, 5.2 bees per frame | precision 0.297  recall 0.427  F1 0.350 | error 3.08 (60%), bias +2.26, agreement -3.77
+20230711a-fan yolo : 120 frames, 21.3 bees per frame | precision 0.911  recall 0.906  F1 0.908 | error 1.72 (8%), bias -0.13, agreement 0.82
+20230711a-fan bgsub: 120 frames, 21.3 bees per frame | precision 0.382  recall 0.231  F1 0.288 | error 8.99 (42%), bias -8.46, agreement -2.88
+20230711b-fan yolo : 119 frames, 12.4 bees per frame | precision 0.888  recall 0.783  F1 0.832 | error 2.31 (19%), bias -1.47, agreement 0.78
+20230711b-fan bgsub: 119 frames, 12.4 bees per frame | precision 0.325  recall 0.298  F1 0.311 | error 4.88 (39%), bias -1.02, agreement 0.11
+
+all yolo : 358 frames, 13.0 bees per frame | precision 0.891  recall 0.860  F1 0.875 | error 1.66 (13%), bias -0.46, agreement 0.92
+  time per frame on the computer: 19 ms
+all bgsub: 358 frames, 13.0 bees per frame | precision 0.342  recall 0.278  F1 0.307 | error 5.66 (44%), bias -2.42, agreement 0.21
+  time per frame on the computer: 7 ms
