@@ -1,0 +1,9 @@
+#!/bin/sh
+# Results of the station card: with the card in the computer reader, counts the
+# bees of the photos of the last session and opens the chart.
+#
+# ./show-results                 finds the card in /Volumes
+# ./show-results /Volumes/NAME   card in a chosen place
+# ./show-results --all           every photo on the card
+cd "$(dirname "$0")" || exit 1
+exec .venv/bin/python analysis/results.py "$@"

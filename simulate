@@ -1,0 +1,11 @@
+#!/bin/sh
+# Station simulation with a hive video: the station ESP32 (firmware/card_simulation)
+# receives a frame every 10 s over USB and writes it to its card, with simulated
+# temperature and humidity.
+#
+# ./simulate               1 minute
+# ./simulate 15            15 minutes
+# ./simulate 15 video.mp4  with another video
+# In the window: q or Esc ends early.
+cd "$(dirname "$0")" || exit 1
+exec .venv/bin/python analysis/simulate.py "$@"
