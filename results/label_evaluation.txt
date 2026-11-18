@@ -1,0 +1,18 @@
+YOLO11n against the hand labels: 800 px wide, confidence >= 0.4, IoU >= 0.5
+
+20230609b: 1000 frames, 6.6 bees per frame | precision 0.595  recall 0.829  F1 0.693 | error 2.65 (40%), bias +2.60, agreement 0.42
+20230711a: 1320 frames, 19.0 bees per frame | precision 0.912  recall 0.859  F1 0.885 | error 1.71 (9%), bias -1.09, agreement 0.91
+20230711b: 910 frames, 8.7 bees per frame | precision 0.891  recall 0.732  F1 0.804 | error 1.98 (23%), bias -1.55, agreement 0.88
+all: 3230 frames, 12.3 bees per frame | precision 0.834  recall 0.829  F1 0.832 | error 2.08 (17%), bias -0.08, agreement 0.90
+
+Count bias by number of labelled bees in the frame (all hives):
+   0 to    5:  893 frames, bias +1.1, error 1.5
+   5 to   10:  646 frames, bias +1.7, error 2.1
+  10 to   20: 1033 frames, bias -0.4, error 1.7
+  20 to   30:  445 frames, bias -1.6, error 2.2
+  30 to more:  213 frames, bias -5.5, error 6.1
+
+Linear correction of the count, fitted on the other two hives:
+  20230609b: labelled = 1.09 x detected -0.00; error 2.65 -> 3.49
+  20230711a: labelled = 1.23 x detected -2.51; error 1.71 -> 2.10
+  20230711b: labelled = 1.12 x detected -2.20; error 1.98 -> 2.95
